@@ -214,14 +214,15 @@ const Engine = {
       ball.trail.push({x:ball.x, y:ball.y, a:1});
       if (ball.trail.length>26) ball.trail.shift();
       ball.trail.forEach(p=>p.a*=.94);
-      // walls (top/bottom + behind-goal out, simple bounce)
+      // walls (top/bottom)
       if (ball.y < 8 || ball.y > PITCH.h-8){ ball.vy*=-.72; ball.y=Math.max(8,Math.min(PITCH.h-8,ball.y)); AUDIO.wall(); }
-      if (ball.x < -40 || ball.x > PITCH.w+40){ this.goalScored(ball.x<0 ? 1 : 0, ball.lastTouch); return; }
-      // goal mouth check (between posts)
+      // end lines: only the goal mouth scores, everything else is boards
       const inMouth = Math.abs(ball.y-PITCH.h/2) < GOAL.h/2;
-      if ((ball.x < 4 && inMouth) || (ball.x > PITCH.w-4 && inMouth)){
-        this.goalScored(ball.x<PITCH.w/2 ? 1 : 0, ball.lastTouch); return;
+      if (inMouth && (ball.x < ball.r || ball.x > PITCH.w-ball.r)){
+        this.goalScored(ball.x < PITCH.w/2 ? 1 : 0, ball.lastTouch); return;
       }
+      if (ball.x < ball.r){ ball.vx = Math.abs(ball.vx)*.72; ball.x = ball.r; AUDIO.wall(); }
+      else if (ball.x > PITCH.w-ball.r){ ball.vx = -Math.abs(ball.vx)*.72; ball.x = PITCH.w-ball.r; AUDIO.wall(); }
       // ball vs flies: gentle bounce off bodies; while the possessed fly
       // holds kick-charge it TRAPS the ball (dribbling) instead of shoving it
       this.flies.forEach(f=>{

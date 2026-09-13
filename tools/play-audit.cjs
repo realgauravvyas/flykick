@@ -122,15 +122,16 @@ const getJSON=u=>new Promise((res,rej)=>{http.get(u,r=>{let b='';r.on('data',c=>
   ok(y1<y0-6,`fly drove UP with W (dy=${(y1-y0).toFixed(0)})`);
 
   console.log('=== CHARGE KICK ===');
-  await ev(`Engine._frozen=true`);
-  const bx=await ev(`(()=>{const f=Engine.possession;f.heading=0;f.vx=0;f.vy=0;Engine.ball.x=f.x+18;Engine.ball.y=f.y;Engine.ball.vx=0;Engine.ball.vy=0;return f.x;})()`);
-  await ev(`Engine._frozen=false`);
+  // isolate: stub AI thinkers so the charge/release kick is deterministic
+  await ev(`Engine._origThink = Engine.thinkAI; Engine.thinkAI = ()=>{};`);
+  await ev(`(()=>{const f=Engine.possession;f.x=480;f.y=320;f.vx=0;f.vy=0;f.heading=0;f.kickCharge=0;Engine.ball.x=f.x+18;Engine.ball.y=f.y;Engine.ball.vx=0;Engine.ball.vy=0;})()`);
   await key('Space');
   await sleep(900); // charge
   const charge=await ev(`Engine.possession.kickCharge`);
   await key('Space','keyUp');
   await sleep(400);
   const bvx=await ev(`Engine.ball.vx`);
+  await ev(`Engine.thinkAI = Engine._origThink;`);
   ok(charge>0.3,`kick charged while holding Space (${(charge/1.6*100).toFixed(0)}%)`);
   ok(bvx>2,`release kicked the ball (vx=${bvx.toFixed(1)})`);
 

@@ -82,11 +82,24 @@ ok(E.possession===null,'Q releases possession');
 E.reset(); E.state='play';
 E.ball.x=2; E.ball.y=320; E.ball.vx=-8; E.ball.lastTouch=E.flies.find(f=>f.team===0&&f.role==='FW');
 for(let i=0;i<5;i++) E.step(16,{});
-ok(E.score[1]===1,'ball crossing LEFT goal line scores for MAGENTA ('+E.score.join(':')+')');
+ok(E.score[1]===1,'ball crossing LEFT goal mouth scores for MAGENTA ('+E.score.join(':')+')');
 E.state='play'; E.ball.x=sandbox.PITCH.w-2; E.ball.vx=8; E.ball.y=320;
 E.ball.lastTouch=E.flies.find(f=>f.team===1&&f.role==='FW');
 for(let i=0;i<5;i++) E.step(16,{});
-ok(E.score[0]===1,'ball crossing RIGHT goal line scores for VOLT ('+E.score.join(':')+')');
+ok(E.score[0]===1,'ball crossing RIGHT goal mouth scores for VOLT ('+E.score.join(':')+')');
+
+// ---- 8. wide shots must NOT score (was a bug: any end-line crossing counted) ----
+E.reset(); E.state='play'; E.t=10;
+// clear the area so a GK dive doesn't intercept the test shot
+E.flies.forEach(f=>{ if(f.role==='GK'){ f.x = f.team===0? 300:750; f.y=320; } else { f.x=Math.max(120,Math.min(930,f.x)); } });
+E.ball.x=14; E.ball.y=90; E.ball.vx=-8; E.ball.vy=0;   // left line, y=90 is outside the mouth (245..395)
+E.ball.lastTouch=null;
+for(let i=0;i<10;i++) E.step(16,{});
+ok(E.score.join(':')==='0:0', 'wide shot (outside the posts) is NOT a goal ('+E.score.join(':')+')');
+ok(E.ball.vx>0.5, `wide shot bounces off the boards instead (vx=${E.ball.vx.toFixed(1)})`);
+E.ball.x=sandbox.PITCH.w-14; E.ball.y=560; E.ball.vx=8;  // right line, also outside mouth
+for(let i=0;i<10;i++) E.step(16,{});
+ok(E.score.join(':')==='0:0', 'wide shot at other end also NOT a goal ('+E.score.join(':')+')');
 
 console.log(`\nRESULT: ${pass} passed, ${fail} failed`);
 process.exit(fail?1:0);
